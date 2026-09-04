@@ -883,83 +883,40 @@ select {
   object-fit: cover;
 }
 
-.promo-shade {
+.result-empty-state {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(8, 8, 7, 0.55) 0%,
-    transparent 35%,
-    rgba(8, 6, 5, 0.9) 100%
-  );
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 2rem;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 79, 47, 0.14), transparent 45%);
+  color: #77776f;
+  text-align: center;
 }
 
-.promo-topline {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6%;
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.03em;
+.result-empty-state > span {
+  width: 3.4rem;
+  height: 3.4rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.25rem;
+  border: 1px solid rgba(255, 79, 47, 0.24);
+  border-radius: 1rem;
+  background: rgba(255, 79, 47, 0.08);
+  color: #ff8068;
 }
 
-.promo-logo {
-  position: relative;
-  width: 2.25rem;
-  height: 2.25rem;
-  overflow: hidden;
-  flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 0.6rem;
-  background: rgba(255, 255, 255, 0.92);
+.result-empty-state strong {
+  color: #d7d4cb;
+  font-size: 0.95rem;
 }
 
-.promo-logo img {
-  object-fit: contain;
-}
-
-.promo-copy {
-  position: absolute;
-  z-index: 2;
-  left: 6%;
-  right: 6%;
-  bottom: 6%;
-}
-
-.promo-copy h3 {
-  max-width: 90%;
-  margin: 0;
-  font-size: clamp(2rem, 5vw, 4.6rem);
-  line-height: 0.98;
-  font-weight: 1000;
-  letter-spacing: -0.055em;
-  text-shadow: 0 3px 22px rgba(0, 0, 0, 0.35);
-}
-
-.promo-copy p {
-  max-width: 82%;
-  margin: 0.85rem 0 0;
-  color: #fff3e9;
-  font-size: clamp(0.9rem, 1.8vw, 1.3rem);
-  font-weight: 750;
-  line-height: 1.4;
-}
-
-.price-pill {
-  display: inline-flex;
-  margin-top: 0.9rem;
-  border-radius: 999px;
-  background: #ff4f2f;
-  color: #180b07;
-  padding: 0.55rem 0.9rem;
-  font-size: clamp(0.72rem, 1.4vw, 0.9rem);
-  font-weight: 1000;
+.result-empty-state small {
+  max-width: 16rem;
+  font-size: 0.74rem;
+  line-height: 1.55;
 }
 
 .loading-overlay {

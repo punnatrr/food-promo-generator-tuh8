@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const OPENAI_IMAGE_ENDPOINT = 'https://api.openai.com/v1/images/edits';
-const MAX_REFERENCE_IMAGES = 10;
+const MAX_FOOD_REFERENCE_IMAGES = 10;
 const MAX_TOTAL_IMAGE_BYTES = 3_800_000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
 const RATE_LIMIT_REQUESTS = 4;
@@ -122,6 +122,8 @@ export async function POST(request: Request) {
     const images = formData
       .getAll('image')
       .filter((value): value is File => value instanceof File);
+    const logoValue = formData.get('logo');
+    const logo = logoValue instanceof File && logoValue.size > 0 ? logoValue : null;
 
     if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 12_000) {
       return json({ error: 'รายละเอียดสำหรับสร้างภาพไม่ถูกต้อง' }, 400);
@@ -129,24 +131,34 @@ export async function POST(request: Request) {
     if (!['square', 'portrait', 'story'].includes(ratioValue)) {
       return json({ error: 'อัตราส่วนภาพไม่ถูกต้อง' }, 400);
     }
-    if (!images.length || images.length > MAX_REFERENCE_IMAGES) {
+    if (!images.length || images.length > MAX_FOOD_REFERENCE_IMAGES) {
       return json({ error: 'กรุณาแนบรูปอาหาร 1–10 รูป' }, 400);
     }
-    if (images.some((image) => !SUPPORTED_IMAGE_TYPES.has(image.type))) {
+    if (
+      images.some((image) => !SUPPORTED_IMAGE_TYPES.has(image.type)) ||
+      (logo && !SUPPORTED_IMAGE_TYPES.has(logo.type))
+    ) {
       return json({ error: 'รองรับเฉพาะไฟล์ JPG, PNG และ WEBP' }, 400);
     }
 
-    const totalImageBytes = images.reduce((total, image) => total + image.size, 0);
+    const totalImageBytes =
+      images.reduce((total, image) => total + image.size, 0) + (logo?.size ?? 0);
     if (totalImageBytes > MAX_TOTAL_IMAGE_BYTES) {
       return json({ error: 'รูปภาพรวมมีขนาดใหญ่เกินไป กรุณาเลือกรูปที่เล็กลง' }, 413);
     }
 
     const upstream = new FormData();
     images.forEach((image) => upstream.append('image[]', image, image.name));
+    if (logo) upstream.append('image[]', logo, logo.name);
     upstream.append('model', 'gpt-image-2');
     upstream.append('prompt', prompt.trim());
     upstream.append('quality', 'high');
-    upstream.append('size', ratioValue === 'square' ? '1024x1024' : '1024x1536');
+    const outputSizes = {
+      square: '1024x1024',
+      portrait: '1024x1280',
+      story: '1152x2048',
+    } as const;
+    upstream.append('size', outputSizes[ratioValue as keyof typeof outputSizes]);
     upstream.append('output_format', 'jpeg');
     upstream.append('output_compression', '88');
 

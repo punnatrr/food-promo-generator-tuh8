@@ -95,12 +95,11 @@ function buildImagePrompt(
 ) {
   return `สร้างภาพโฆษณาอาหารระดับ Professional Commercial Food Photography สำหรับโพสต์ ${data.channel} โดยใช้อาหารจากรูปอ้างอิง ${photoCount} รูปเป็น HERO หลักของภาพ ดูน่ากินมาก สดใหม่ ฉ่ำ มี texture ชัดเจน และให้ความรู้สึกเหมือนภาพโฆษณาร้านอาหารระดับมืออาชีพ
 
-ข้อมูลสำหรับกำหนดบรรยากาศและพื้นที่จัดวาง (ระบบเว็บไซต์จะวางข้อความภาษาไทยภายหลัง):
-ชื่อร้าน: “${data.restaurant}”
+ข้อมูลที่ต้องแสดงในภาพเท่านั้น:
 ชื่อเมนู: “${data.menu}”
 คำโปรย: “${data.tagline}”
 ราคา: “${displayPrice(data.price)}”
-${hasLogo ? 'เว้นพื้นที่โล่งด้านบนสำหรับวางโลโก้ร้านภายหลัง' : 'ไม่ต้องเว้นพื้นที่สำหรับโลโก้'}
+${hasLogo ? `รูปอ้างอิงรูปสุดท้ายคือโลโก้ร้าน “${data.restaurant}” ให้นำโลโก้นั้นมาใช้ในชิ้นงานโดยรักษารูปทรง สี และสัดส่วนเดิม` : 'ห้ามสร้างหรือใส่โลโก้และชื่อร้านเพิ่มเติม'}
 
 VISUAL DIRECTION:
 นำเสนอ “${data.menu}” เป็นจุดเด่นที่สุดของภาพ จัดวางอาหารขนาดใหญ่ เห็นรายละเอียดวัตถุดิบชัดเจน เน้นความสด ความฉ่ำ ความกรอบ ความนุ่ม หรือความเข้มข้นตามธรรมชาติของเมนู ถ้าเป็นอาหารร้อนให้เห็นไอร้อนบาง ๆ ที่สมจริง ถ้ามีซอสให้ฉ่ำ เงาสวย และเคลือบอาหารอย่างเป็นธรรมชาติ ถ้าเป็นอาหารทอดให้เห็นผิวกรอบสีเหลืองทอง ถ้าเป็นเนื้อให้ดู juicy ชุ่มฉ่ำ ถ้าเป็นชีสให้ดูเยิ้ม ถ้าเป็นเครื่องดื่มให้เห็นหยดน้ำเย็นเกาะแก้ว ห้ามทำให้อาหารดูเป็นพลาสติกหรือ CGI
@@ -108,20 +107,27 @@ VISUAL DIRECTION:
 COMPOSITION & LIGHTING:
 Premium Food Advertising ให้อาหารกินพื้นที่ประมาณ 55–70% ของภาพ ใช้มุมกล้องที่เหมาะกับชนิดอาหาร เช่น 45-degree hero angle, close-up หรือ slightly top-down มี foreground และ background separation, shallow depth of field เล็กน้อย ฉากหลังสะอาด ไม่รก เข้ากับประเภทอาหาร และมีวัตถุดิบประกอบฉากได้เล็กน้อยโดยไม่แย่งความเด่น ใช้ professional restaurant advertising lighting แสงนุ่มจากด้านข้างและด้านหลัง มี highlight เน้นความฉ่ำและ texture เงามีมิติ สีสดสมจริง high dynamic range, photorealistic, high-end retouching, ultra detailed
 
-GRAPHIC DESIGN SAFE AREA:
-ลำดับ Visual Hierarchy ของชิ้นงานสำเร็จคือ 1) อาหาร 2) ชื่อเมนู 3) ราคา 4) คำโปรย จัดอาหารไม่ให้บังพื้นที่ว่างบริเวณด้านล่างประมาณ 25–30% สำหรับระบบวางชื่อเมนู ราคา และคำโปรย และ${hasLogo ? 'เว้นพื้นที่ว่างด้านบนประมาณ 10% สำหรับโลโก้ด้วย' : 'รักษาพื้นที่ด้านบนให้สะอาด'} บรรยากาศสอดคล้องกับภาษาโฆษณาระดับ “${data.tone}” (${toneDirections[data.tone]})
+TYPOGRAPHY & GRAPHIC DESIGN:
+ออกแบบข้อความให้เป็นส่วนหนึ่งของงานโฆษณา ไม่ใช่เพียงนำข้อความมาวางทับภาพ ชื่อเมนู “${data.menu}” ต้องใหญ่ เด่น และอ่านง่ายที่สุดรองจากอาหาร คำโปรย “${data.tagline}” มีขนาดรองลงมา อ่านง่าย และช่วยกระตุ้นความอยากอาหาร ราคา “${displayPrice(data.price)}” ต้องโดดเด่นและมองเห็นทันทีด้วย price badge, sticker, label หรือ graphic element ที่เข้ากับงาน ใช้ระดับภาษา “${data.tone}” (${toneDirections[data.tone]})
+
+จัดลำดับ Visual Hierarchy: 1) อาหาร 2) ชื่อเมนู 3) ราคา 4) คำโปรย ไม่วางข้อความทับบริเวณสำคัญของอาหาร และเว้นพื้นที่หายใจรอบข้อความอย่างเหมาะสม คัดลอกข้อความภาษาไทยทั้งสามรายการตามที่ให้ไว้แบบตัวต่อตัว ห้ามแปล ห้ามเรียบเรียงใหม่ ห้ามเพิ่มหรือตัดคำ และต้องสะกดถูกต้อง อ่านง่าย ไม่ผิดเพี้ยน
 
 STYLE:
-Modern premium restaurant advertisement, appetizing, mouth-watering, clean commercial layout, professional food styling, realistic photography, high-end restaurant campaign, พร้อมโพสต์ขายสินค้า ไม่มีองค์ประกอบที่ไม่เกี่ยวข้อง
+Modern premium restaurant advertisement, appetizing, mouth-watering, clean commercial layout, professional food styling, realistic photography, high-end restaurant campaign, พร้อมโพสต์ขายสินค้า ไม่รก ไม่มี watermark ไม่มีข้อความอื่นนอกเหนือจากที่กำหนด และไม่มีองค์ประกอบที่ไม่เกี่ยวข้อง
 
-ข้อกำหนดสำคัญ: สร้างเฉพาะภาพถ่ายและฉากหลังสำหรับงานโฆษณา ห้ามสร้างตัวอักษร ตัวเลข ราคา ป้ายข้อความ โลโก้ ลายน้ำ หรือเครื่องหมายใด ๆ ลงในภาพโดยเด็ดขาด เพราะระบบเว็บไซต์จะวางข้อความภาษาไทยและโลโก้จริงอย่างคมชัดภายหลัง`;
+ข้อกำหนดสำคัญ: ส่งออกเป็นโปสเตอร์โฆษณาที่เสร็จสมบูรณ์ในไฟล์ภาพเดียว โดยมีภาพอาหาร งานกราฟิก ข้อความที่กำหนด และ${hasLogo ? 'โลโก้จากรูปอ้างอิง' : 'ไม่มีโลโก้'}รวมอยู่ในภาพที่สร้างแล้ว`;
 }
 
-async function compressFoodPhoto(file: File, targetBytes: number) {
+async function compressReferenceImage(
+  file: File,
+  targetBytes: number,
+  role: 'food' | 'logo' = 'food',
+) {
   const bitmap = await createImageBitmap(file);
-  let maxEdge = 1_600;
-  let quality = 0.86;
+  let maxEdge = role === 'logo' ? 1_024 : 1_600;
+  let quality = role === 'logo' ? 0.92 : 0.86;
   let latestBlob: Blob | null = null;
+  const outputType = role === 'logo' ? 'image/webp' : 'image/jpeg';
 
   try {
     for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -135,7 +141,7 @@ async function compressFoodPhoto(file: File, targetBytes: number) {
       latestBlob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
           (blob) => (blob ? resolve(blob) : reject(new Error('ไม่สามารถบีบอัดรูปภาพนี้ได้'))),
-          'image/jpeg',
+          outputType,
           quality,
         );
       });
@@ -152,9 +158,10 @@ async function compressFoodPhoto(file: File, targetBytes: number) {
     throw new Error(`รูป ${file.name} มีขนาดใหญ่เกินไป กรุณาเลือกรูปที่เล็กลง`);
   }
 
-  const safeName = file.name.replace(/\.[^.]+$/, '') || 'food-photo';
-  return new File([latestBlob], `${safeName}.jpg`, {
-    type: 'image/jpeg',
+  const safeName = file.name.replace(/\.[^.]+$/, '') || role;
+  const extension = role === 'logo' ? 'webp' : 'jpg';
+  return new File([latestBlob], `${safeName}.${extension}`, {
+    type: outputType,
     lastModified: file.lastModified,
   });
 }
@@ -166,8 +173,7 @@ export default function Home() {
   const [logo, setLogo] = useState<UploadedImage | null>(null);
   const [activeFoodId, setActiveFoodId] = useState<string | null>(null);
   const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
-  const [resultLogoUrl, setResultLogoUrl] = useState<string | null>(null);
-  const [generationPrompt, setGenerationPrompt] = useState('');
+  const [resultRatio, setResultRatio] = useState<'square' | 'portrait' | 'story'>('portrait');
   const [ratio, setRatio] = useState<'square' | 'portrait' | 'story'>('portrait');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -226,7 +232,6 @@ export default function Home() {
             setPromo(next);
             setResult(next);
             const prompt = buildImagePrompt(next, foodPhotos.length, Boolean(logo));
-            setGenerationPrompt(prompt);
             return {
               status: foodPhotos.length ? 'ready' : 'waiting_for_food_photos',
               restaurant: next.restaurant,
@@ -289,7 +294,6 @@ export default function Home() {
     const remaining = foodPhotos.filter((item) => item.id !== photo.id);
     setFoodPhotos(remaining);
     if (activeFoodId === photo.id) setActiveFoodId(remaining[0]?.id ?? null);
-    if (resultImageUrl === photo.url) setResultImageUrl(null);
     forgetUrl(photo.url);
     setUploadNotice('');
   }
@@ -301,7 +305,6 @@ export default function Home() {
       return;
     }
     if (logo) {
-      if (resultLogoUrl === logo.url) setResultLogoUrl(null);
       forgetUrl(logo.url);
     }
     const nextLogo = {
@@ -316,7 +319,6 @@ export default function Home() {
 
   function removeLogo() {
     if (!logo) return;
-    if (resultLogoUrl === logo.url) setResultLogoUrl(null);
     forgetUrl(logo.url);
     setLogo(null);
   }
@@ -330,8 +332,7 @@ export default function Home() {
     setLogo(null);
     setActiveFoodId(null);
     setResultImageUrl(null);
-    setResultLogoUrl(null);
-    setGenerationPrompt('');
+    setResultRatio('portrait');
     setFormError('');
     setUploadNotice('');
   }
@@ -358,12 +359,17 @@ export default function Home() {
         if (right.id === activeFoodId) return 1;
         return 0;
       });
-      const targetBytes = Math.floor(MAX_GENERATION_UPLOAD_BYTES / foodPhotos.length);
+      const referenceCount = foodPhotos.length + (logo ? 1 : 0);
+      const targetBytes = Math.floor(MAX_GENERATION_UPLOAD_BYTES / referenceCount);
       const preparedPhotos = await Promise.all(
-        orderedPhotos.map((photo) => compressFoodPhoto(photo.file, targetBytes)),
+        orderedPhotos.map((photo) => compressReferenceImage(photo.file, targetBytes)),
       );
+      const preparedLogo = logo
+        ? await compressReferenceImage(logo.file, targetBytes, 'logo')
+        : null;
       const requestBody = new FormData();
       preparedPhotos.forEach((photo) => requestBody.append('image', photo, photo.name));
+      if (preparedLogo) requestBody.append('logo', preparedLogo, preparedLogo.name);
       requestBody.append('prompt', prompt);
       requestBody.append('ratio', ratio);
 
@@ -381,8 +387,7 @@ export default function Home() {
 
       setResult({ ...promo });
       setResultImageUrl(payload.image);
-      setResultLogoUrl(logo?.url ?? null);
-      setGenerationPrompt(prompt);
+      setResultRatio(ratio);
       document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง');
@@ -621,7 +626,7 @@ export default function Home() {
 
               <div className="final-step">
                 <span className="final-step-number">07</span>
-                <div><strong>สร้างภาพโฆษณา</strong><small>อาหารจะเป็น HERO หลัก พร้อมชื่อเมนู ราคา และคำโปรย</small></div>
+                <div><strong>สร้างภาพโฆษณา</strong><small>AI จะเจนโปสเตอร์พร้อมภาพอาหาร ข้อความ ราคา และโลโก้ในไฟล์เดียว</small></div>
               </div>
               <Button type="submit" size="lg" className="generate-button h-14 w-full rounded-xl text-base font-extrabold" disabled={loading}>
                 {loading ? <LoaderCircle className="size-5 animate-spin" /> : <WandSparkles className="size-5" />}
@@ -631,11 +636,11 @@ export default function Home() {
           </form>
 
           <div className="results-column">
-            <section id="result" className="panel result-panel overflow-hidden" aria-label="ตัวอย่างผลงาน">
+            <section id="result" className="panel result-panel overflow-hidden" aria-label="ผลลัพธ์ภาพที่ AI สร้าง">
               <div className="panel-heading">
                 <div className="heading-copy">
                   <span className="step-number result-step">07</span>
-                  <div><h2>ผลงานพร้อมโพสต์</h2><p>ตัวอย่างจัดวางแบบ Premium Food Advertising</p></div>
+                  <div><h2>ผลงานพร้อมโพสต์</h2><p>ไฟล์โปสเตอร์ที่ AI สร้างจากรูปและข้อมูลของคุณ</p></div>
                 </div>
                 <fieldset className="ratio-toggle" aria-label="อัตราส่วนรูปภาพ">
                   <button type="button" className={ratio === 'square' ? 'active' : ''} onClick={() => setRatio('square')}>1:1</button>
@@ -645,33 +650,30 @@ export default function Home() {
               </div>
 
               <div className="preview-stage">
-                <div className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}>
-                  <Image
-                    src={resultImageUrl ?? '/pad-krapao-promo.png'}
-                    alt={`${result.menu} สำหรับโฆษณาร้านอาหาร`}
-                    fill
-                    priority
-                    sizes="(max-width: 1023px) 90vw, 48vw"
-                    unoptimized={Boolean(resultImageUrl)}
-                  />
-                  <div className="promo-shade" />
-                  {resultLogoUrl && (
-                    <div className="promo-topline">
-                      <span className="promo-logo"><Image src={resultLogoUrl} alt={`โลโก้ ${result.restaurant}`} fill sizes="40px" unoptimized /></span>
+                <div className={`promo-card ratio-${resultImageUrl ? resultRatio : ratio} ${loading ? 'is-loading' : ''}`}>
+                  {resultImageUrl ? (
+                    <Image
+                      src={resultImageUrl}
+                      alt={`โปสเตอร์ ${result.menu} ที่ AI สร้าง`}
+                      fill
+                      priority
+                      sizes="(max-width: 1023px) 90vw, 48vw"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="result-empty-state">
+                      <span><WandSparkles className="size-7" /></span>
+                      <strong>ยังไม่มีภาพที่เจน</strong>
+                      <small>อัปโหลดรูปอาหาร แล้วกด “สร้างภาพด้วย AI”</small>
                     </div>
                   )}
-                  <div className="promo-copy">
-                    <h3>{result.menu}</h3>
-                    <div className="price-pill">{displayPrice(result.price)}</div>
-                    <p>{result.tagline}</p>
-                  </div>
                   {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span><small>ปกติใช้เวลาประมาณ 1–2 นาที</small></div>}
                 </div>
               </div>
 
               <div className="quality-bar">
                 <span><BadgeCheck className="size-4" /> Professional Food Ad</span>
-                <span>{generationPrompt ? 'พร้อมจากข้อมูลล่าสุด' : 'อัปโหลดรูปเพื่อเริ่มสร้าง'}</span>
+                <span>{resultImageUrl ? 'ภาพนี้สร้างโดย AI จากข้อมูลล่าสุด' : 'รอสร้างภาพจริงจาก AI'}</span>
               </div>
             </section>
 
