@@ -120,7 +120,7 @@ export default function Home() {
   const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
   const [resultLogoUrl, setResultLogoUrl] = useState<string | null>(null);
   const [generationPrompt, setGenerationPrompt] = useState('');
-  const [ratio, setRatio] = useState<'square' | 'portrait' | 'story'>('square');
+  const [ratio, setRatio] = useState<'square' | 'portrait' | 'story'>('portrait');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [formError, setFormError] = useState('');
@@ -577,15 +577,12 @@ export default function Home() {
                     unoptimized={Boolean(resultImageUrl)}
                   />
                   <div className="promo-shade" />
-                  <div className="promo-topline">
-                    <span className="restaurant-lockup">
-                      {resultLogoUrl && <span className="promo-logo"><Image src={resultLogoUrl} alt={`โลโก้ ${result.restaurant}`} fill sizes="40px" unoptimized /></span>}
-                      <span>{result.restaurant}</span>
-                    </span>
-                    <span className="promo-badge">{result.channel}</span>
-                  </div>
+                  {resultLogoUrl && (
+                    <div className="promo-topline">
+                      <span className="promo-logo"><Image src={resultLogoUrl} alt={`โลโก้ ${result.restaurant}`} fill sizes="40px" unoptimized /></span>
+                    </div>
+                  )}
                   <div className="promo-copy">
-                    <span className="eyebrow">เมนูแนะนำ</span>
                     <h3>{result.menu}</h3>
                     <div className="price-pill">{displayPrice(result.price)}</div>
                     <p>{result.tagline}</p>

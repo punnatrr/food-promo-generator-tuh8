@@ -909,12 +909,6 @@ select {
   letter-spacing: 0.03em;
 }
 
-.restaurant-lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
 .promo-logo {
   position: relative;
   width: 2.25rem;
@@ -930,29 +924,12 @@ select {
   object-fit: contain;
 }
 
-.promo-badge {
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.65rem;
-}
-
 .promo-copy {
   position: absolute;
   z-index: 2;
   left: 6%;
   right: 6%;
   bottom: 6%;
-}
-
-.promo-copy .eyebrow {
-  display: inline-flex;
-  margin-bottom: 0.7rem;
-  color: #ff8e77;
-  font-size: clamp(0.62rem, 1.2vw, 0.78rem);
-  font-weight: 900;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
 }
 
 .promo-copy h3 {
