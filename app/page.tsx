@@ -1,29 +1,44 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Check,
+  BadgeCheck,
   Camera,
+  Check,
   Copy,
+  ImagePlus,
+  Images,
+  Languages,
   LoaderCircle,
+  MessageSquareText,
   RotateCcw,
+  Share2,
   Sparkles,
+  Store,
+  UploadCloud,
   WandSparkles,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 
+const MAX_FOOD_PHOTOS = 10;
 const channels = ['Facebook', 'Instagram', 'LINE OA', 'TikTok'];
-const tones = ['สนุก เป็นกันเอง', 'น่ากินจนต้องสั่ง', 'พรีเมียม', 'เร่งด่วน FOMO'];
+const tones = ['เป็นกันเอง', 'ทางการ', 'หรูหรา'];
 
 const toneOpeners: Record<string, string> = {
-  'สนุก เป็นกันเอง': 'วันนี้กินอะไรดี? ให้จานนี้ตอบแทน 😋',
-  น่ากินจนต้องสั่ง: 'หิวเมื่อไหร่ ให้จานเด็ดช่วย 🔥',
-  พรีเมียม: 'ความอร่อยที่ตั้งใจ ตั้งแต่วัตถุดิบถึงจานเสิร์ฟ ✨',
-  'เร่งด่วน FOMO': 'โปรนี้มีไม่นาน! ช้าอดอร่อยนะ ⏰',
+  เป็นกันเอง: 'มื้อนี้ต้องลองแล้ว! 😋',
+  ทางการ: 'สัมผัสความอร่อยที่เราตั้งใจรังสรรค์ในทุกจาน',
+  หรูหรา: 'ประสบการณ์แห่งรสชาติที่ประณีตในทุกรายละเอียด ✨',
+};
+
+const toneDirections: Record<string, string> = {
+  เป็นกันเอง: 'เป็นกันเอง เข้าถึงง่าย ชวนหิว และเหมาะกับ Social Media',
+  ทางการ: 'สุภาพ น่าเชื่อถือ กระชับ และเป็นมืออาชีพ',
+  หรูหรา: 'หรูหรา ประณีต พรีเมียม และมีรสนิยม',
 };
 
 type ModelContext = {
@@ -43,35 +58,84 @@ type ModelContext = {
 type PromoState = {
   restaurant: string;
   menu: string;
-  offer: string;
   price: string;
-  details: string;
+  tagline: string;
   channel: string;
   tone: string;
+};
+
+type UploadedImage = {
+  id: string;
+  name: string;
+  url: string;
 };
 
 const initialPromo: PromoState = {
   restaurant: 'ครัวใจดี',
   menu: 'ข้าวกะเพราไข่ดาว',
-  offer: 'อิ่มคุ้ม ลดทันที 20%',
-  price: 'เริ่มต้น 79 บาท',
-  details: 'หอมกะเพราสด ผัดจานต่อจาน เผ็ดร้อนถึงใจ โปรเฉพาะสัปดาห์นี้',
+  price: '79',
+  tagline: 'หอมกะเพราสด ผัดจานต่อจาน เผ็ดร้อนถึงใจ',
   channel: 'Instagram',
-  tone: 'น่ากินจนต้องสั่ง',
+  tone: 'เป็นกันเอง',
 };
+
+function displayPrice(price: string) {
+  const trimmed = price.trim();
+  if (!trimmed) return '— บาท';
+  return trimmed.includes('บาท') ? trimmed : `${trimmed} บาท`;
+}
+
+function buildImagePrompt(
+  data: PromoState,
+  photoCount: number,
+  hasLogo: boolean,
+) {
+  return `สร้างภาพโฆษณาอาหารระดับ Professional Commercial Food Photography สำหรับโพสต์ ${data.channel} โดยใช้อาหารจากรูปอ้างอิง ${photoCount} รูปเป็น HERO หลักของภาพ ดูน่ากินมาก สดใหม่ ฉ่ำ มี texture ชัดเจน และให้ความรู้สึกเหมือนภาพโฆษณาร้านอาหารระดับมืออาชีพ
+
+ข้อมูลที่ต้องแสดงเท่านั้น:
+ชื่อเมนู: “${data.menu}”
+คำโปรย: “${data.tagline}”
+ราคา: “${displayPrice(data.price)}”
+${hasLogo ? `ใช้โลโก้ “${data.restaurant}” ที่แนบมาอย่างถูกสัดส่วน วางในพื้นที่ที่อ่านชัดและไม่บังอาหาร` : 'ไม่ต้องสร้างหรือใส่โลโก้สมมติ'}
+
+VISUAL DIRECTION:
+นำเสนอ “${data.menu}” เป็นจุดเด่นที่สุดของภาพ จัดวางอาหารขนาดใหญ่ เห็นรายละเอียดวัตถุดิบชัดเจน เน้นความสด ความฉ่ำ ความกรอบ ความนุ่ม หรือความเข้มข้นตามธรรมชาติของเมนู ถ้าเป็นอาหารร้อนให้เห็นไอร้อนบาง ๆ ที่สมจริง ถ้ามีซอสให้ฉ่ำ เงาสวย และเคลือบอาหารอย่างเป็นธรรมชาติ ถ้าเป็นอาหารทอดให้เห็นผิวกรอบสีเหลืองทอง ถ้าเป็นเนื้อให้ดู juicy ชุ่มฉ่ำ ถ้าเป็นชีสให้ดูเยิ้ม ถ้าเป็นเครื่องดื่มให้เห็นหยดน้ำเย็นเกาะแก้ว ห้ามทำให้อาหารดูเป็นพลาสติกหรือ CGI
+
+COMPOSITION & LIGHTING:
+Premium Food Advertising ให้อาหารกินพื้นที่ประมาณ 55–70% ของภาพ ใช้มุมกล้องที่เหมาะกับชนิดอาหาร เช่น 45-degree hero angle, close-up หรือ slightly top-down มี foreground และ background separation, shallow depth of field เล็กน้อย ฉากหลังสะอาด ไม่รก เข้ากับประเภทอาหาร และมีวัตถุดิบประกอบฉากได้เล็กน้อยโดยไม่แย่งความเด่น ใช้ professional restaurant advertising lighting แสงนุ่มจากด้านข้างและด้านหลัง มี highlight เน้นความฉ่ำและ texture เงามีมิติ สีสดสมจริง high dynamic range, photorealistic, high-end retouching, ultra detailed
+
+TYPOGRAPHY & GRAPHIC DESIGN:
+ออกแบบข้อความให้เป็นส่วนหนึ่งของงานโฆษณา ลำดับ Visual Hierarchy คือ 1) อาหาร 2) ชื่อเมนู 3) ราคา 4) คำโปรย ชื่อเมนูต้องใหญ่เด่น ราคาเห็นทันทีด้วย price badge หรือ graphic element ที่เหมาะสม คำโปรยอ่านง่าย กระชับ ใช้ภาษาไทยระดับ “${data.tone}” (${toneDirections[data.tone]}) สะกดถูกต้อง ไม่ผิดเพี้ยน ไม่วางทับส่วนสำคัญของอาหาร และมีพื้นที่หายใจรอบข้อความ
+
+STYLE:
+Modern premium restaurant advertisement, appetizing, mouth-watering, clean commercial layout, professional food styling, realistic photography, high-end restaurant campaign, พร้อมโพสต์ขายสินค้า ไม่มี watermark ไม่มีข้อความอื่นนอกเหนือจากที่กำหนด และไม่มีองค์ประกอบที่ไม่เกี่ยวข้อง`;
+}
 
 export default function Home() {
   const [promo, setPromo] = useState(initialPromo);
   const [result, setResult] = useState(initialPromo);
+  const [foodPhotos, setFoodPhotos] = useState<UploadedImage[]>([]);
+  const [logo, setLogo] = useState<UploadedImage | null>(null);
+  const [activeFoodId, setActiveFoodId] = useState<string | null>(null);
+  const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
+  const [resultLogoUrl, setResultLogoUrl] = useState<string | null>(null);
+  const [generationPrompt, setGenerationPrompt] = useState('');
   const [ratio, setRatio] = useState<'square' | 'portrait' | 'story'>('square');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [uploadNotice, setUploadNotice] = useState('');
+  const objectUrls = useRef<string[]>([]);
 
   const caption = useMemo(
     () =>
-      `${toneOpeners[result.tone] ?? toneOpeners['น่ากินจนต้องสั่ง']}\n\n${result.offer} กับ “${result.menu}” ${result.details} — ${result.price}\n\nแวะมาที่ ${result.restaurant} หรือทักแชตสั่งได้เลยวันนี้!\n\n#${result.restaurant.replace(/\s/g, '')} #โปรร้านอาหาร #ของอร่อยบอกต่อ`,
+      `${toneOpeners[result.tone] ?? toneOpeners['เป็นกันเอง']}\n\n“${result.menu}” — ${result.tagline}\n${displayPrice(result.price)}\n\nแวะมาที่ ${result.restaurant} หรือทักแชตสั่งได้เลยวันนี้!\n\n#${result.restaurant.replace(/\s/g, '')} #โปรร้านอาหาร #ของอร่อยบอกต่อ`,
     [result],
   );
+
+  useEffect(() => {
+    return () => objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
@@ -82,29 +146,21 @@ export default function Home() {
     void Promise.resolve(
       context.registerTool(
         {
-          name: 'generate_restaurant_promotion',
-          title: 'สร้างโปรโมชันร้านอาหาร',
-          description: 'กรอกรายละเอียดและสร้างโปสเตอร์พร้อมแคปชันในหน้า LAZYFOOD.AI',
+          name: 'prepare_restaurant_advertisement',
+          title: 'เตรียมภาพโฆษณาร้านอาหาร',
+          description:
+            'กรอกข้อมูลร้าน เมนู คำโปรย ราคา ช่องทาง และระดับภาษา เพื่อเตรียมภาพโฆษณาอาหารระดับมืออาชีพ',
           inputSchema: {
             type: 'object',
             properties: {
-              restaurant: {
-                type: 'string',
-                minLength: 1,
-                description: 'ชื่อร้านอาหาร',
-              },
+              restaurant: { type: 'string', minLength: 1, description: 'ชื่อร้านอาหาร' },
               menu: { type: 'string', minLength: 1, description: 'ชื่อเมนู' },
-              offer: {
-                type: 'string',
-                minLength: 1,
-                description: 'ข้อความโปรโมชัน',
-              },
-              price: { type: 'string', minLength: 1, description: 'ราคา' },
-              details: { type: 'string', description: 'จุดเด่นของเมนู' },
+              tagline: { type: 'string', minLength: 1, description: 'คำโปรยเมนู' },
+              price: { type: 'string', minLength: 1, description: 'ราคา ไม่จำเป็นต้องใส่คำว่าบาท' },
               channel: { type: 'string', enum: channels },
               tone: { type: 'string', enum: tones },
             },
-            required: ['restaurant', 'menu', 'offer', 'price'],
+            required: ['restaurant', 'menu', 'tagline', 'price', 'channel', 'tone'],
             additionalProperties: false,
           },
           annotations: { readOnlyHint: false, untrustedContentHint: false },
@@ -112,25 +168,23 @@ export default function Home() {
             if (!input || typeof input !== 'object')
               throw new Error('ข้อมูลโปรโมชันไม่ถูกต้อง');
             const data = input as Partial<PromoState>;
-            for (const key of [
-              'restaurant',
-              'menu',
-              'offer',
-              'price',
-            ] as const) {
+            for (const key of ['restaurant', 'menu', 'tagline', 'price'] as const) {
               if (typeof data[key] !== 'string' || !data[key]?.trim())
                 throw new Error(`กรุณาระบุ ${key}`);
             }
             const next = { ...initialPromo, ...data } as PromoState;
             if (!channels.includes(next.channel) || !tones.includes(next.tone))
-              throw new Error('ช่องทางหรือน้ำเสียงไม่ถูกต้อง');
+              throw new Error('ช่องทางหรือระดับภาษาไม่ถูกต้อง');
             setPromo(next);
             setResult(next);
+            const prompt = buildImagePrompt(next, foodPhotos.length, Boolean(logo));
+            setGenerationPrompt(prompt);
             return {
-              status: 'ready',
+              status: foodPhotos.length ? 'ready' : 'waiting_for_food_photos',
               restaurant: next.restaurant,
               menu: next.menu,
               channel: next.channel,
+              prompt,
             };
           },
         },
@@ -139,18 +193,124 @@ export default function Home() {
     ).catch(() => undefined);
 
     return () => lifecycle.abort();
-  }, []);
+  }, [foodPhotos.length, logo]);
 
   function update<K extends keyof PromoState>(key: K, value: PromoState[K]) {
     setPromo((current) => ({ ...current, [key]: value }));
+    setFormError('');
+  }
+
+  function rememberUrl(url: string) {
+    objectUrls.current.push(url);
+    return url;
+  }
+
+  function forgetUrl(url: string) {
+    URL.revokeObjectURL(url);
+    objectUrls.current = objectUrls.current.filter((item) => item !== url);
+  }
+
+  function addFoodPhotos(files: FileList | null) {
+    if (!files?.length) return;
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    const remaining = MAX_FOOD_PHOTOS - foodPhotos.length;
+    const accepted = imageFiles.slice(0, Math.max(remaining, 0));
+    const nextPhotos = accepted.map((file) => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      url: rememberUrl(URL.createObjectURL(file)),
+    }));
+
+    if (nextPhotos.length) {
+      setFoodPhotos((current) => [...current, ...nextPhotos]);
+      setActiveFoodId((current) => current ?? nextPhotos[0].id);
+      setFormError('');
+    }
+
+    if (imageFiles.length > accepted.length) {
+      setUploadNotice(`เพิ่มได้สูงสุด ${MAX_FOOD_PHOTOS} รูป ระบบรับไว้ ${accepted.length} รูป`);
+    } else if (imageFiles.length !== files.length) {
+      setUploadNotice('รองรับเฉพาะไฟล์รูปภาพเท่านั้น');
+    } else {
+      setUploadNotice('');
+    }
+  }
+
+  function removeFoodPhoto(photo: UploadedImage) {
+    const remaining = foodPhotos.filter((item) => item.id !== photo.id);
+    setFoodPhotos(remaining);
+    if (activeFoodId === photo.id) setActiveFoodId(remaining[0]?.id ?? null);
+    if (resultImageUrl === photo.url) setResultImageUrl(null);
+    forgetUrl(photo.url);
+    setUploadNotice('');
+  }
+
+  function setLogoFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setUploadNotice('โลโก้ต้องเป็นไฟล์รูปภาพ');
+      return;
+    }
+    if (logo) {
+      if (resultLogoUrl === logo.url) setResultLogoUrl(null);
+      forgetUrl(logo.url);
+    }
+    const nextLogo = {
+      id: crypto.randomUUID(),
+      name: file.name,
+      url: rememberUrl(URL.createObjectURL(file)),
+    };
+    setLogo(nextLogo);
+    setUploadNotice('');
+  }
+
+  function removeLogo() {
+    if (!logo) return;
+    if (resultLogoUrl === logo.url) setResultLogoUrl(null);
+    forgetUrl(logo.url);
+    setLogo(null);
+  }
+
+  function resetWorkflow() {
+    objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.current = [];
+    setPromo(initialPromo);
+    setResult(initialPromo);
+    setFoodPhotos([]);
+    setLogo(null);
+    setActiveFoodId(null);
+    setResultImageUrl(null);
+    setResultLogoUrl(null);
+    setGenerationPrompt('');
+    setFormError('');
+    setUploadNotice('');
   }
 
   function generatePromo() {
+    const selectedPhoto =
+      foodPhotos.find((photo) => photo.id === activeFoodId) ?? foodPhotos[0];
+    if (!selectedPhoto) {
+      setFormError('กรุณาอัปโหลดรูปอาหารอย่างน้อย 1 รูปก่อนสร้างภาพ');
+      document.getElementById('food-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (!promo.restaurant.trim() || !promo.menu.trim() || !promo.tagline.trim() || !promo.price.trim()) {
+      setFormError('กรุณากรอกชื่อร้าน ชื่อเมนู คำโปรย และราคาให้ครบ');
+      return;
+    }
+
+    const prompt = buildImagePrompt(promo, foodPhotos.length, Boolean(logo));
     setLoading(true);
+    setFormError('');
     window.setTimeout(() => {
-      setResult(promo);
+      setResult({ ...promo });
+      setResultImageUrl(selectedPhoto.url);
+      setResultLogoUrl(logo?.url ?? null);
+      setGenerationPrompt(prompt);
       setLoading(false);
-    }, 850);
+      document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1100);
   }
 
   async function copyCaption() {
@@ -159,28 +319,29 @@ export default function Home() {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  const workflowSteps = [
+    'รูปอาหาร',
+    'โลโก้ร้าน',
+    'ข้อมูลเมนู',
+    'คำโปรย',
+    'ช่องทาง',
+    'ระดับภาษา',
+    'สร้างภาพ',
+  ];
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="site-header">
         <div className="site-header-inner">
-          <a
-            href="#"
-            className="brand-lockup"
-            aria-label="LAZYFOOD.AI หน้าหลัก"
-          >
-            <span className="brand-icon">
-              <Sparkles className="size-5" />
-            </span>
+          <a href="#workspace" className="brand-lockup" aria-label="LAZYFOOD.AI เริ่มสร้างภาพ">
+            <span className="brand-icon"><Sparkles className="size-5" /></span>
             <span className="brand-copy">
-              <strong>
-                LAZYFOOD<span>.AI</span>
-              </strong>
+              <strong>LAZYFOOD<span>.AI</span></strong>
               <small>AI Food Creative Studio</small>
             </span>
           </a>
-
           <nav className="header-nav" aria-label="เมนูหลัก">
-            <a href="#workspace">สร้างโปรโมชัน</a>
+            <a href="#workspace">สร้างภาพ</a>
             <a href="#result">ตัวอย่างผลงาน</a>
             <span className="beta-pill">เวอร์ชันทดลอง</span>
           </nav>
@@ -189,23 +350,21 @@ export default function Home() {
 
       <section className="site-shell">
         <div className="hero-block">
-          <div className="hero-kicker">
-            <span /> AI FOOD PROMOTION STUDIO
-          </div>
-          <h1>
-            สร้างรูปโปรโมตร้านอาหารง่ายๆ
-            <span>พร้อมโพสต์ในไม่กี่คลิก</span>
-          </h1>
-          <p>
-            ใส่ชื่อร้าน เมนู ราคา และโปรโมชัน แล้วให้ AI ช่วยจัดภาพพร้อมแคปชัน
-            สำหรับช่องทางที่คุณเลือก
-          </p>
+          <div className="hero-kicker"><span /> AI FOOD ADVERTISING STUDIO</div>
+          <h1>เปลี่ยนรูปอาหารของคุณ<span>เป็นภาพโฆษณาระดับมืออาชีพ</span></h1>
+          <p>อัปโหลดภาพ กรอกข้อมูล แล้วสร้างชิ้นงานพร้อมโพสต์ตามช่องทางและระดับภาษาที่คุณเลือก</p>
           <div className="hero-stats" aria-label="จุดเด่นของเครื่องมือ">
-            <span>4 ช่องทางยอดนิยม</span>
-            <span>3 ขนาดพร้อมใช้</span>
-            <span>แคปชันพร้อมโพสต์</span>
+            <span>อัปโหลดได้สูงสุด 10 รูป</span>
+            <span>รองรับโลโก้ร้าน</span>
+            <span>3 ขนาด Social Media</span>
           </div>
         </div>
+
+        <ol className="workflow-strip" aria-label="ลำดับการสร้างภาพ">
+          {workflowSteps.map((step, index) => (
+            <li key={step}><span>{index + 1}</span>{step}</li>
+          ))}
+        </ol>
 
         <div id="workspace" className="workspace-grid">
           <form
@@ -217,229 +376,239 @@ export default function Home() {
           >
             <div className="panel-heading">
               <div className="heading-copy">
-                <span className="step-number">01</span>
+                <span className="step-number">01–07</span>
                 <div>
-                  <h2>ตั้งค่าโปรโมชัน</h2>
-                  <p>กรอกรายละเอียดร้านและกำหนดรูปแบบโพสต์ที่ต้องการ</p>
+                  <h2>เวิร์กโฟลว์สร้างภาพ</h2>
+                  <p>ทำตามลำดับให้ครบ แล้วกดสร้างภาพในขั้นตอนสุดท้าย</p>
                 </div>
               </div>
-              <button
-                type="button"
-                className="reset-button"
-                onClick={() => setPromo(initialPromo)}
-              >
+              <button type="button" className="reset-button" onClick={resetWorkflow}>
                 <RotateCcw className="size-3.5" /> รีเซ็ต
               </button>
             </div>
 
             <div className="form-body">
-              <section className="form-section">
-                <div className="section-heading">
-                  <div>
-                    <h3>ข้อมูลร้านและเมนู</h3>
-                    <p>ระบุเมนูหลักและข้อเสนอที่ลูกค้าจะเห็นบนภาพ</p>
-                  </div>
-                  <span>STEP 1</span>
+              <WorkflowStep
+                step="01"
+                title="อัปโหลดรูปอาหาร"
+                description={`เพิ่มได้หลายรูป แต่ไม่เกิน ${MAX_FOOD_PHOTOS} รูป และเลือกรูปหลักสำหรับชิ้นงานได้`}
+                icon={<Images className="size-4" />}
+              >
+                <div id="food-upload" className="upload-area">
+                  <input
+                    id="food-photos"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(event) => {
+                      addFoodPhotos(event.currentTarget.files);
+                      event.currentTarget.value = '';
+                    }}
+                  />
+                  <label className="upload-dropzone" htmlFor="food-photos">
+                    <span className="upload-icon"><UploadCloud className="size-5" /></span>
+                    <span><strong>เลือกรูปอาหาร</strong><small>JPG, PNG หรือ WEBP · {foodPhotos.length}/{MAX_FOOD_PHOTOS} รูป</small></span>
+                  </label>
                 </div>
 
+                {foodPhotos.length > 0 && (
+                  <div className="photo-grid" aria-label="รูปอาหารที่อัปโหลด">
+                    {foodPhotos.map((photo, index) => (
+                      <div key={photo.id} className={`photo-item ${activeFoodId === photo.id ? 'active' : ''}`}>
+                        <button
+                          type="button"
+                          className="photo-select"
+                          onClick={() => setActiveFoodId(photo.id)}
+                          aria-label={`เลือกรูป ${photo.name} เป็นรูปหลัก`}
+                        >
+                          <Image src={photo.url} alt={photo.name} fill sizes="96px" unoptimized />
+                          <span>{activeFoodId === photo.id ? 'รูปหลัก' : `รูป ${index + 1}`}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="photo-remove"
+                          onClick={() => removeFoodPhoto(photo)}
+                          aria-label={`ลบรูป ${photo.name}`}
+                        ><X className="size-3.5" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </WorkflowStep>
+
+              <WorkflowStep
+                step="02"
+                title="อัปโหลดโลโก้ร้าน"
+                description="ไม่บังคับ · หากอัปโหลด โลโก้จะถูกวางอย่างพอดีและไม่บังอาหาร"
+                icon={<ImagePlus className="size-4" />}
+              >
+                {logo ? (
+                  <div className="logo-preview">
+                    <span className="logo-image"><Image src={logo.url} alt={`โลโก้ ${promo.restaurant}`} fill sizes="64px" unoptimized /></span>
+                    <span><strong>{logo.name}</strong><small>พร้อมใช้บนชิ้นงาน</small></span>
+                    <button type="button" onClick={removeLogo} aria-label="ลบโลโก้"><X className="size-4" /></button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      id="shop-logo"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(event) => {
+                        setLogoFile(event.currentTarget.files?.[0]);
+                        event.currentTarget.value = '';
+                      }}
+                    />
+                    <label className="logo-upload" htmlFor="shop-logo"><ImagePlus className="size-4" /> เพิ่มโลโก้ร้าน <span>ไม่บังคับ</span></label>
+                  </>
+                )}
+              </WorkflowStep>
+
+              <WorkflowStep
+                step="03"
+                title="กรอกข้อมูลร้านและเมนู"
+                description="ข้อมูลหลักที่ใช้บนชิ้นงานโฆษณา"
+                icon={<Store className="size-4" />}
+              >
                 <div className="fields-stack">
                   <Field label="ชื่อร้าน">
-                    <Input
-                      value={promo.restaurant}
-                      onChange={(e) => update('restaurant', e.target.value)}
-                    />
+                    <Input required value={promo.restaurant} onChange={(event) => update('restaurant', event.target.value)} />
                   </Field>
-
-                  <Field label="เมนูที่อยากโปรโมต">
-                    <Input
-                      value={promo.menu}
-                      onChange={(e) => update('menu', e.target.value)}
-                    />
+                  <Field label="ชื่อเมนู">
+                    <Input required value={promo.menu} onChange={(event) => update('menu', event.target.value)} />
                   </Field>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="ข้อเสนอ / โปรโมชัน">
-                      <Input
-                        value={promo.offer}
-                        onChange={(e) => update('offer', e.target.value)}
-                      />
-                    </Field>
-                    <Field label="ราคา">
-                      <Input
-                        value={promo.price}
-                        onChange={(e) => update('price', e.target.value)}
-                      />
-                    </Field>
-                  </div>
-                </div>
-              </section>
-
-              <section className="form-section">
-                <div className="section-heading">
-                  <div>
-                    <h3>รายละเอียดและรูปแบบ</h3>
-                    <p>เลือกจุดขาย ช่องทาง และน้ำเสียงให้เหมาะกับโพสต์</p>
-                  </div>
-                  <span>STEP 2</span>
-                </div>
-
-                <div className="fields-stack">
-                  <Field label="จุดเด่นของเมนู">
-                    <Textarea
-                      rows={3}
-                      value={promo.details}
-                      onChange={(e) => update('details', e.target.value)}
-                    />
-                  </Field>
-
-                  <Field label="ช่องทางที่จะโพสต์">
-                    <div className="grid grid-cols-2 gap-2">
-                      {channels.map((channel) => (
-                        <button
-                          key={channel}
-                          type="button"
-                          className={`choice-button ${promo.channel === channel ? 'active' : ''}`}
-                          onClick={() => update('channel', channel)}
-                        >
-                          {promo.channel === channel && (
-                            <Check className="size-3.5" />
-                          )}
-                          {channel}
-                        </button>
-                      ))}
+                  <Field label="ราคา">
+                    <div className="price-input-wrap">
+                      <Input required inputMode="decimal" value={promo.price} onChange={(event) => update('price', event.target.value)} />
+                      <span>บาท</span>
                     </div>
                   </Field>
-
-                  <Field label="น้ำเสียง">
-                    <NativeSelect
-                      value={promo.tone}
-                      onChange={(e) => update('tone', e.target.value)}
-                      className="w-full"
-                    >
-                      {tones.map((tone) => (
-                        <option key={tone}>{tone}</option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
                 </div>
-              </section>
+              </WorkflowStep>
 
-              <Button
-                type="submit"
-                size="lg"
-                className="generate-button h-14 w-full rounded-xl text-base font-extrabold"
-                disabled={loading}
+              <WorkflowStep
+                step="04"
+                title="ใส่คำอธิบายเมนู (คำโปรย)"
+                description="เขียนสั้น กระชับ และบอกจุดเด่นที่ทำให้เมนูน่ากิน"
+                icon={<MessageSquareText className="size-4" />}
               >
-                {loading ? (
-                  <LoaderCircle className="size-5 animate-spin" />
-                ) : (
-                  <WandSparkles className="size-5" />
-                )}
-                {loading ? 'กำลังปรุงไอเดีย...' : 'สร้างโปรโมชั่นด้วย AI'}
+                <Field label="คำโปรย">
+                  <Textarea required rows={3} maxLength={140} value={promo.tagline} onChange={(event) => update('tagline', event.target.value)} />
+                  <span className="character-count">{promo.tagline.length}/140</span>
+                </Field>
+              </WorkflowStep>
+
+              <WorkflowStep
+                step="05"
+                title="เลือกช่องทางโพสต์"
+                description="สัดส่วนภาพยังสามารถปรับได้ในพื้นที่ผลงาน"
+                icon={<Share2 className="size-4" />}
+              >
+                <Field label="ช่องทางที่จะโพสต์">
+                  <div className="grid grid-cols-2 gap-2">
+                    {channels.map((channel) => (
+                      <button
+                        key={channel}
+                        type="button"
+                        className={`choice-button ${promo.channel === channel ? 'active' : ''}`}
+                        onClick={() => {
+                          update('channel', channel);
+                          setRatio(channel === 'TikTok' ? 'story' : channel === 'Instagram' ? 'portrait' : 'square');
+                        }}
+                      >
+                        {promo.channel === channel && <Check className="size-3.5" />}{channel}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              </WorkflowStep>
+
+              <WorkflowStep
+                step="06"
+                title="เลือกระดับภาษา"
+                description="AI จะปรับน้ำเสียงของคำโฆษณาให้เหมาะกับแบรนด์"
+                icon={<Languages className="size-4" />}
+              >
+                <Field label="ระดับภาษา">
+                  <NativeSelect value={promo.tone} onChange={(event) => update('tone', event.target.value)} className="w-full">
+                    {tones.map((tone) => <option key={tone}>{tone}</option>)}
+                  </NativeSelect>
+                </Field>
+              </WorkflowStep>
+
+              {uploadNotice && <output className="form-notice">{uploadNotice}</output>}
+              {formError && <p className="form-error" role="alert">{formError}</p>}
+
+              <div className="final-step">
+                <span className="final-step-number">07</span>
+                <div><strong>สร้างภาพโฆษณา</strong><small>อาหารจะเป็น HERO หลัก พร้อมชื่อเมนู ราคา และคำโปรย</small></div>
+              </div>
+              <Button type="submit" size="lg" className="generate-button h-14 w-full rounded-xl text-base font-extrabold" disabled={loading}>
+                {loading ? <LoaderCircle className="size-5 animate-spin" /> : <WandSparkles className="size-5" />}
+                {loading ? 'AI กำลังออกแบบภาพ...' : 'สร้างภาพด้วย AI'}
               </Button>
             </div>
           </form>
 
           <div className="results-column">
-            <section
-              id="result"
-              className="panel result-panel overflow-hidden"
-              aria-label="ตัวอย่างผลงาน"
-            >
+            <section id="result" className="panel result-panel overflow-hidden" aria-label="ตัวอย่างผลงาน">
               <div className="panel-heading">
                 <div className="heading-copy">
-                  <span className="step-number result-step">02</span>
-                  <div>
-                    <h2>พื้นที่สร้างสรรค์</h2>
-                    <p>ดูตัวอย่างและสลับขนาดผลงานก่อนนำไปโพสต์</p>
-                  </div>
+                  <span className="step-number result-step">07</span>
+                  <div><h2>ผลงานพร้อมโพสต์</h2><p>ตัวอย่างจัดวางแบบ Premium Food Advertising</p></div>
                 </div>
-                <div
-                  className="ratio-toggle"
-                  role="group"
-                  aria-label="อัตราส่วนรูปภาพ"
-                >
-                  <button
-                    type="button"
-                    className={ratio === 'square' ? 'active' : ''}
-                    onClick={() => setRatio('square')}
-                  >
-                    1:1
-                  </button>
-                  <button
-                    type="button"
-                    className={ratio === 'portrait' ? 'active' : ''}
-                    onClick={() => setRatio('portrait')}
-                  >
-                    4:5
-                  </button>
-                  <button
-                    type="button"
-                    className={ratio === 'story' ? 'active' : ''}
-                    onClick={() => setRatio('story')}
-                  >
-                    9:16
-                  </button>
-                </div>
+                <fieldset className="ratio-toggle" aria-label="อัตราส่วนรูปภาพ">
+                  <button type="button" className={ratio === 'square' ? 'active' : ''} onClick={() => setRatio('square')}>1:1</button>
+                  <button type="button" className={ratio === 'portrait' ? 'active' : ''} onClick={() => setRatio('portrait')}>4:5</button>
+                  <button type="button" className={ratio === 'story' ? 'active' : ''} onClick={() => setRatio('story')}>9:16</button>
+                </fieldset>
               </div>
 
               <div className="preview-stage">
-                <div
-                  className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}
-                >
+                <div className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}>
                   <Image
-                    src="/pad-krapao-promo.png"
-                    alt="ข้าวกะเพราไข่ดาวสำหรับโปรโมชันร้านอาหาร"
+                    src={resultImageUrl ?? '/pad-krapao-promo.png'}
+                    alt={`${result.menu} สำหรับโฆษณาร้านอาหาร`}
                     fill
                     priority
                     sizes="(max-width: 1023px) 90vw, 48vw"
+                    unoptimized={Boolean(resultImageUrl)}
                   />
                   <div className="promo-shade" />
                   <div className="promo-topline">
-                    <span>{result.restaurant}</span>
-                    <span className="promo-badge">พร้อมเสิร์ฟ</span>
+                    <span className="restaurant-lockup">
+                      {resultLogoUrl && <span className="promo-logo"><Image src={resultLogoUrl} alt={`โลโก้ ${result.restaurant}`} fill sizes="40px" unoptimized /></span>}
+                      <span>{result.restaurant}</span>
+                    </span>
+                    <span className="promo-badge">{result.channel}</span>
                   </div>
                   <div className="promo-copy">
-                    <span className="eyebrow">เมนูฮิตประจำสัปดาห์</span>
-                    <h3>{result.offer}</h3>
-                    <p>{result.menu}</p>
-                    <div className="price-pill">{result.price}</div>
+                    <span className="eyebrow">เมนูแนะนำ</span>
+                    <h3>{result.menu}</h3>
+                    <div className="price-pill">{displayPrice(result.price)}</div>
+                    <p>{result.tagline}</p>
                   </div>
-                  {loading && (
-                    <div className="loading-overlay">
-                      <LoaderCircle className="size-8 animate-spin text-primary" />
-                      <span>AI กำลังจัดจาน...</span>
-                    </div>
-                  )}
+                  {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span></div>}
                 </div>
+              </div>
+
+              <div className="quality-bar">
+                <span><BadgeCheck className="size-4" /> Professional Food Ad</span>
+                <span>{generationPrompt ? 'พร้อมจากข้อมูลล่าสุด' : 'อัปโหลดรูปเพื่อเริ่มสร้าง'}</span>
               </div>
             </section>
 
             <aside id="caption" className="panel caption-panel">
               <div className="panel-heading compact">
-                <div className="flex items-center gap-2">
-                  <Camera className="size-4 text-primary" />
-                  <h2>แคปชันสำหรับ {result.channel}</h2>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyCaption}
-                  className="text-[#c5c3ba] hover:bg-white/10 hover:text-white"
-                >
-                  {copied ? (
-                    <Check className="size-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
+                <div className="flex items-center gap-2"><Camera className="size-4 text-primary" /><h2>แคปชันสำหรับ {result.channel}</h2></div>
+                <Button variant="ghost" size="sm" onClick={copyCaption} className="text-[#c5c3ba] hover:bg-white/10 hover:text-white">
+                  {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
                   {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
                 </Button>
               </div>
-              <div className="p-5 sm:p-6">
-                <p className="whitespace-pre-line text-[15px] leading-7 text-[#d3d1c9]">
-                  {caption}
-                </p>
-              </div>
+              <div className="p-5 sm:p-6"><p className="whitespace-pre-line text-[15px] leading-7 text-[#d3d1c9]">{caption}</p></div>
             </aside>
           </div>
         </div>
@@ -448,16 +617,34 @@ export default function Home() {
   );
 }
 
-function Field({
-  label,
+function WorkflowStep({
+  step,
+  title,
+  description,
+  icon,
   children,
 }: {
-  label: string;
+  step: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-2">
-      <span className="text-sm font-bold text-[#dedbd2]">{label}</span>
+    <section className="form-section workflow-section">
+      <div className="section-heading">
+        <div className="section-title-wrap"><span className="section-icon">{icon}</span><div><h3>{title}</h3><p>{description}</p></div></div>
+        <span>STEP {step}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="field-label">
+      <span>{label}</span>
       {children}
     </label>
   );
