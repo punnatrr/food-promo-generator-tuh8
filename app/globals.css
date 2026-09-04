@@ -976,6 +976,12 @@ select {
   font-weight: 800;
 }
 
+.loading-overlay small {
+  color: #aaa79f;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
 .caption-panel {
   background: rgba(17, 17, 16, 0.9);
 }

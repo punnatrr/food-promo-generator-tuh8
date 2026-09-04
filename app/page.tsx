@@ -26,6 +26,8 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 
 const MAX_FOOD_PHOTOS = 10;
+const MAX_GENERATION_UPLOAD_BYTES = 3_300_000;
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const channels = ['Facebook', 'Instagram', 'LINE OA', 'TikTok'];
 const tones = ['เป็นกันเอง', 'ทางการ', 'หรูหรา'];
 
@@ -68,6 +70,7 @@ type UploadedImage = {
   id: string;
   name: string;
   url: string;
+  file: File;
 };
 
 const initialPromo: PromoState = {
@@ -92,11 +95,12 @@ function buildImagePrompt(
 ) {
   return `สร้างภาพโฆษณาอาหารระดับ Professional Commercial Food Photography สำหรับโพสต์ ${data.channel} โดยใช้อาหารจากรูปอ้างอิง ${photoCount} รูปเป็น HERO หลักของภาพ ดูน่ากินมาก สดใหม่ ฉ่ำ มี texture ชัดเจน และให้ความรู้สึกเหมือนภาพโฆษณาร้านอาหารระดับมืออาชีพ
 
-ข้อมูลที่ต้องแสดงเท่านั้น:
+ข้อมูลสำหรับกำหนดบรรยากาศและพื้นที่จัดวาง (ระบบเว็บไซต์จะวางข้อความภาษาไทยภายหลัง):
+ชื่อร้าน: “${data.restaurant}”
 ชื่อเมนู: “${data.menu}”
 คำโปรย: “${data.tagline}”
 ราคา: “${displayPrice(data.price)}”
-${hasLogo ? `ใช้โลโก้ “${data.restaurant}” ที่แนบมาอย่างถูกสัดส่วน วางในพื้นที่ที่อ่านชัดและไม่บังอาหาร` : 'ไม่ต้องสร้างหรือใส่โลโก้สมมติ'}
+${hasLogo ? 'เว้นพื้นที่โล่งด้านบนสำหรับวางโลโก้ร้านภายหลัง' : 'ไม่ต้องเว้นพื้นที่สำหรับโลโก้'}
 
 VISUAL DIRECTION:
 นำเสนอ “${data.menu}” เป็นจุดเด่นที่สุดของภาพ จัดวางอาหารขนาดใหญ่ เห็นรายละเอียดวัตถุดิบชัดเจน เน้นความสด ความฉ่ำ ความกรอบ ความนุ่ม หรือความเข้มข้นตามธรรมชาติของเมนู ถ้าเป็นอาหารร้อนให้เห็นไอร้อนบาง ๆ ที่สมจริง ถ้ามีซอสให้ฉ่ำ เงาสวย และเคลือบอาหารอย่างเป็นธรรมชาติ ถ้าเป็นอาหารทอดให้เห็นผิวกรอบสีเหลืองทอง ถ้าเป็นเนื้อให้ดู juicy ชุ่มฉ่ำ ถ้าเป็นชีสให้ดูเยิ้ม ถ้าเป็นเครื่องดื่มให้เห็นหยดน้ำเย็นเกาะแก้ว ห้ามทำให้อาหารดูเป็นพลาสติกหรือ CGI
@@ -104,11 +108,55 @@ VISUAL DIRECTION:
 COMPOSITION & LIGHTING:
 Premium Food Advertising ให้อาหารกินพื้นที่ประมาณ 55–70% ของภาพ ใช้มุมกล้องที่เหมาะกับชนิดอาหาร เช่น 45-degree hero angle, close-up หรือ slightly top-down มี foreground และ background separation, shallow depth of field เล็กน้อย ฉากหลังสะอาด ไม่รก เข้ากับประเภทอาหาร และมีวัตถุดิบประกอบฉากได้เล็กน้อยโดยไม่แย่งความเด่น ใช้ professional restaurant advertising lighting แสงนุ่มจากด้านข้างและด้านหลัง มี highlight เน้นความฉ่ำและ texture เงามีมิติ สีสดสมจริง high dynamic range, photorealistic, high-end retouching, ultra detailed
 
-TYPOGRAPHY & GRAPHIC DESIGN:
-ออกแบบข้อความให้เป็นส่วนหนึ่งของงานโฆษณา ลำดับ Visual Hierarchy คือ 1) อาหาร 2) ชื่อเมนู 3) ราคา 4) คำโปรย ชื่อเมนูต้องใหญ่เด่น ราคาเห็นทันทีด้วย price badge หรือ graphic element ที่เหมาะสม คำโปรยอ่านง่าย กระชับ ใช้ภาษาไทยระดับ “${data.tone}” (${toneDirections[data.tone]}) สะกดถูกต้อง ไม่ผิดเพี้ยน ไม่วางทับส่วนสำคัญของอาหาร และมีพื้นที่หายใจรอบข้อความ
+GRAPHIC DESIGN SAFE AREA:
+ลำดับ Visual Hierarchy ของชิ้นงานสำเร็จคือ 1) อาหาร 2) ชื่อเมนู 3) ราคา 4) คำโปรย จัดอาหารไม่ให้บังพื้นที่ว่างบริเวณด้านล่างประมาณ 25–30% สำหรับระบบวางชื่อเมนู ราคา และคำโปรย และ${hasLogo ? 'เว้นพื้นที่ว่างด้านบนประมาณ 10% สำหรับโลโก้ด้วย' : 'รักษาพื้นที่ด้านบนให้สะอาด'} บรรยากาศสอดคล้องกับภาษาโฆษณาระดับ “${data.tone}” (${toneDirections[data.tone]})
 
 STYLE:
-Modern premium restaurant advertisement, appetizing, mouth-watering, clean commercial layout, professional food styling, realistic photography, high-end restaurant campaign, พร้อมโพสต์ขายสินค้า ไม่มี watermark ไม่มีข้อความอื่นนอกเหนือจากที่กำหนด และไม่มีองค์ประกอบที่ไม่เกี่ยวข้อง`;
+Modern premium restaurant advertisement, appetizing, mouth-watering, clean commercial layout, professional food styling, realistic photography, high-end restaurant campaign, พร้อมโพสต์ขายสินค้า ไม่มีองค์ประกอบที่ไม่เกี่ยวข้อง
+
+ข้อกำหนดสำคัญ: สร้างเฉพาะภาพถ่ายและฉากหลังสำหรับงานโฆษณา ห้ามสร้างตัวอักษร ตัวเลข ราคา ป้ายข้อความ โลโก้ ลายน้ำ หรือเครื่องหมายใด ๆ ลงในภาพโดยเด็ดขาด เพราะระบบเว็บไซต์จะวางข้อความภาษาไทยและโลโก้จริงอย่างคมชัดภายหลัง`;
+}
+
+async function compressFoodPhoto(file: File, targetBytes: number) {
+  const bitmap = await createImageBitmap(file);
+  let maxEdge = 1_600;
+  let quality = 0.86;
+  let latestBlob: Blob | null = null;
+
+  try {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('ไม่สามารถเตรียมรูปภาพนี้ได้');
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      latestBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('ไม่สามารถบีบอัดรูปภาพนี้ได้'))),
+          'image/jpeg',
+          quality,
+        );
+      });
+
+      if (latestBlob.size <= targetBytes) break;
+      maxEdge = Math.max(720, Math.round(maxEdge * 0.82));
+      quality = Math.max(0.56, quality - 0.08);
+    }
+  } finally {
+    bitmap.close();
+  }
+
+  if (!latestBlob || latestBlob.size > targetBytes) {
+    throw new Error(`รูป ${file.name} มีขนาดใหญ่เกินไป กรุณาเลือกรูปที่เล็กลง`);
+  }
+
+  const safeName = file.name.replace(/\.[^.]+$/, '') || 'food-photo';
+  return new File([latestBlob], `${safeName}.jpg`, {
+    type: 'image/jpeg',
+    lastModified: file.lastModified,
+  });
 }
 
 export default function Home() {
@@ -212,13 +260,14 @@ export default function Home() {
 
   function addFoodPhotos(files: FileList | null) {
     if (!files?.length) return;
-    const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    const imageFiles = Array.from(files).filter((file) => SUPPORTED_IMAGE_TYPES.includes(file.type));
     const remaining = MAX_FOOD_PHOTOS - foodPhotos.length;
     const accepted = imageFiles.slice(0, Math.max(remaining, 0));
     const nextPhotos = accepted.map((file) => ({
       id: crypto.randomUUID(),
       name: file.name,
       url: rememberUrl(URL.createObjectURL(file)),
+      file,
     }));
 
     if (nextPhotos.length) {
@@ -230,7 +279,7 @@ export default function Home() {
     if (imageFiles.length > accepted.length) {
       setUploadNotice(`เพิ่มได้สูงสุด ${MAX_FOOD_PHOTOS} รูป ระบบรับไว้ ${accepted.length} รูป`);
     } else if (imageFiles.length !== files.length) {
-      setUploadNotice('รองรับเฉพาะไฟล์รูปภาพเท่านั้น');
+      setUploadNotice('รองรับเฉพาะไฟล์ JPG, PNG และ WEBP เท่านั้น');
     } else {
       setUploadNotice('');
     }
@@ -247,8 +296,8 @@ export default function Home() {
 
   function setLogoFile(file: File | undefined) {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setUploadNotice('โลโก้ต้องเป็นไฟล์รูปภาพ');
+    if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      setUploadNotice('โลโก้ต้องเป็นไฟล์ JPG, PNG หรือ WEBP');
       return;
     }
     if (logo) {
@@ -259,6 +308,7 @@ export default function Home() {
       id: crypto.randomUUID(),
       name: file.name,
       url: rememberUrl(URL.createObjectURL(file)),
+      file,
     };
     setLogo(nextLogo);
     setUploadNotice('');
@@ -286,10 +336,8 @@ export default function Home() {
     setUploadNotice('');
   }
 
-  function generatePromo() {
-    const selectedPhoto =
-      foodPhotos.find((photo) => photo.id === activeFoodId) ?? foodPhotos[0];
-    if (!selectedPhoto) {
+  async function generatePromo() {
+    if (!foodPhotos.length) {
       setFormError('กรุณาอัปโหลดรูปอาหารอย่างน้อย 1 รูปก่อนสร้างภาพ');
       document.getElementById('food-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -303,14 +351,44 @@ export default function Home() {
     const prompt = buildImagePrompt(promo, foodPhotos.length, Boolean(logo));
     setLoading(true);
     setFormError('');
-    window.setTimeout(() => {
+
+    try {
+      const orderedPhotos = [...foodPhotos].sort((left, right) => {
+        if (left.id === activeFoodId) return -1;
+        if (right.id === activeFoodId) return 1;
+        return 0;
+      });
+      const targetBytes = Math.floor(MAX_GENERATION_UPLOAD_BYTES / foodPhotos.length);
+      const preparedPhotos = await Promise.all(
+        orderedPhotos.map((photo) => compressFoodPhoto(photo.file, targetBytes)),
+      );
+      const requestBody = new FormData();
+      preparedPhotos.forEach((photo) => requestBody.append('image', photo, photo.name));
+      requestBody.append('prompt', prompt);
+      requestBody.append('ratio', ratio);
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        body: requestBody,
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { image?: string; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.image) {
+        throw new Error(payload?.error || 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง');
+      }
+
       setResult({ ...promo });
-      setResultImageUrl(selectedPhoto.url);
+      setResultImageUrl(payload.image);
       setResultLogoUrl(logo?.url ?? null);
       setGenerationPrompt(prompt);
-      setLoading(false);
       document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 1100);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function copyCaption() {
@@ -371,7 +449,7 @@ export default function Home() {
             className="panel form-panel"
             onSubmit={(event) => {
               event.preventDefault();
-              generatePromo();
+              void generatePromo();
             }}
           >
             <div className="panel-heading">
@@ -398,7 +476,7 @@ export default function Home() {
                   <input
                     id="food-photos"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     multiple
                     className="sr-only"
                     onChange={(event) => {
@@ -454,7 +532,7 @@ export default function Home() {
                     <input
                       id="shop-logo"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       className="sr-only"
                       onChange={(event) => {
                         setLogoFile(event.currentTarget.files?.[0]);
@@ -587,7 +665,7 @@ export default function Home() {
                     <div className="price-pill">{displayPrice(result.price)}</div>
                     <p>{result.tagline}</p>
                   </div>
-                  {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span></div>}
+                  {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span><small>ปกติใช้เวลาประมาณ 1–2 นาที</small></div>}
                 </div>
               </div>
 
