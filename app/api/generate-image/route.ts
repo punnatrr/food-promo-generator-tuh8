@@ -110,7 +110,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return json({ error: 'กรุณาส่งรูปอาหารและรายละเอียดสำหรับสร้างภาพ' }, 400);
+    }
     const prompt = formData.get('prompt');
     const ratio = formData.get('ratio');
     const ratioValue = typeof ratio === 'string' ? ratio : '';
