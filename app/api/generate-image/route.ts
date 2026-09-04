@@ -1,11 +1,12 @@
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const maxDuration = 180;
 
 const OPENAI_IMAGE_ENDPOINT = 'https://api.openai.com/v1/images/edits';
 const MAX_FOOD_REFERENCE_IMAGES = 10;
 const MAX_TOTAL_IMAGE_BYTES = 3_800_000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1_000;
 const RATE_LIMIT_REQUESTS = 4;
+const OPENAI_TIMEOUT_MS = 165_000;
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 type RateLimitEntry = {
@@ -96,6 +97,9 @@ function openAIErrorMessage(status: number, code?: string) {
 }
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
+  const requestId = request.headers.get('x-vercel-id') || crypto.randomUUID();
+
   if (!isSameOrigin(request)) {
     return json({ error: 'ไม่อนุญาตให้เรียกใช้งานจากเว็บไซต์อื่น' }, 403);
   }
@@ -147,12 +151,23 @@ export async function POST(request: Request) {
       return json({ error: 'รูปภาพรวมมีขนาดใหญ่เกินไป กรุณาเลือกรูปที่เล็กลง' }, 413);
     }
 
+    console.log(JSON.stringify({
+      level: 'info',
+      msg: 'generation_started',
+      route: '/api/generate-image',
+      requestId,
+      foodImages: images.length,
+      hasLogo: Boolean(logo),
+      inputBytes: totalImageBytes,
+      ratio: ratioValue,
+    }));
+
     const upstream = new FormData();
     images.forEach((image) => upstream.append('image[]', image, image.name));
     if (logo) upstream.append('image[]', logo, logo.name);
     upstream.append('model', 'gpt-image-2');
     upstream.append('prompt', prompt.trim());
-    upstream.append('quality', 'high');
+    upstream.append('quality', 'medium');
     const outputSizes = {
       square: '1024x1024',
       portrait: '1024x1280',
@@ -160,7 +175,7 @@ export async function POST(request: Request) {
     } as const;
     upstream.append('size', outputSizes[ratioValue as keyof typeof outputSizes]);
     upstream.append('output_format', 'jpeg');
-    upstream.append('output_compression', '88');
+    upstream.append('output_compression', '84');
 
     const response = await fetch(OPENAI_IMAGE_ENDPOINT, {
       method: 'POST',
@@ -169,11 +184,20 @@ export async function POST(request: Request) {
       },
       body: upstream,
       cache: 'no-store',
-      signal: AbortSignal.timeout(240_000),
+      signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
     });
     const payload = (await response.json().catch(() => ({}))) as OpenAIImageResponse;
 
     if (!response.ok) {
+      console.error(JSON.stringify({
+        level: 'error',
+        msg: 'openai_generation_failed',
+        route: '/api/generate-image',
+        requestId,
+        status: response.status,
+        code: payload.error?.code,
+        ms: Date.now() - startedAt,
+      }));
       return json(
         { error: openAIErrorMessage(response.status, payload.error?.code) },
         response.status >= 500 ? 502 : response.status,
@@ -185,11 +209,35 @@ export async function POST(request: Request) {
       return json({ error: 'AI สร้างภาพแล้วแต่ไม่ได้ส่งไฟล์ภาพกลับมา กรุณาลองใหม่' }, 502);
     }
 
-    return json({
-      image: `data:image/jpeg;base64,${imageBase64}`,
-      model: 'gpt-image-2',
+    const imageBytes = Buffer.from(imageBase64, 'base64');
+    console.log(JSON.stringify({
+      level: 'info',
+      msg: 'generation_completed',
+      route: '/api/generate-image',
+      requestId,
+      outputBytes: imageBytes.byteLength,
+      ms: Date.now() - startedAt,
+    }));
+
+    return new Response(imageBytes, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+        'Content-Disposition': 'inline; filename="food-promo.jpg"',
+        'Content-Type': 'image/jpeg',
+        'X-Generation-Model': 'gpt-image-2',
+        'X-Request-Id': requestId,
+      },
     });
   } catch (error) {
+    console.error(JSON.stringify({
+      level: 'error',
+      msg: 'generation_exception',
+      route: '/api/generate-image',
+      requestId,
+      error: error instanceof Error ? error.name : 'UnknownError',
+      ms: Date.now() - startedAt,
+    }));
     if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
       return json({ error: 'การสร้างภาพใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง' }, 504);
     }

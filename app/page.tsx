@@ -373,24 +373,44 @@ export default function Home() {
       requestBody.append('prompt', prompt);
       requestBody.append('ratio', ratio);
 
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        body: requestBody,
-      });
-      const payload = (await response.json().catch(() => null)) as
-        | { image?: string; error?: string }
-        | null;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 180_000);
+      let response: Response;
+      try {
+        response = await fetch('/api/generate-image', {
+          method: 'POST',
+          body: requestBody,
+          signal: controller.signal,
+        });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
 
-      if (!response.ok || !payload?.image) {
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error || 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง');
       }
 
+      const generatedImage = await response.blob();
+      if (!generatedImage.size || !generatedImage.type.startsWith('image/')) {
+        throw new Error('ระบบไม่ได้รับไฟล์ภาพจาก AI กรุณาลองอีกครั้ง');
+      }
+
+      if (resultImageUrl?.startsWith('blob:')) forgetUrl(resultImageUrl);
+      const generatedImageUrl = rememberUrl(URL.createObjectURL(generatedImage));
       setResult({ ...promo });
-      setResultImageUrl(payload.image);
+      setResultImageUrl(generatedImageUrl);
       setResultRatio(ratio);
       document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง');
+      const message =
+        error instanceof Error && error.name === 'AbortError'
+          ? 'AI ใช้เวลานานเกิน 3 นาที ระบบหยุดการรอแล้ว กรุณาลองใหม่อีกครั้ง'
+          : error instanceof Error
+            ? error.message
+            : 'สร้างภาพไม่สำเร็จ กรุณาลองอีกครั้ง';
+      setFormError(message);
+      document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } finally {
       setLoading(false);
     }
@@ -663,11 +683,11 @@ export default function Home() {
                   ) : (
                     <div className="result-empty-state">
                       <span><WandSparkles className="size-7" /></span>
-                      <strong>ยังไม่มีภาพที่เจน</strong>
-                      <small>อัปโหลดรูปอาหาร แล้วกด “สร้างภาพด้วย AI”</small>
+                      <strong>{formError || 'ยังไม่มีภาพที่เจน'}</strong>
+                      <small>{formError ? 'ตรวจสอบข้อความแจ้งเตือนแล้วลองใหม่' : 'อัปโหลดรูปอาหาร แล้วกด “สร้างภาพด้วย AI”'}</small>
                     </div>
                   )}
-                  {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span><small>ปกติใช้เวลาประมาณ 1–2 นาที</small></div>}
+                  {loading && <div className="loading-overlay"><LoaderCircle className="size-8 animate-spin text-primary" /><span>AI กำลังจัดแสงและองค์ประกอบ...</span><small>ระบบจะหยุดรออัตโนมัติภายใน 3 นาที</small></div>}
                 </div>
               </div>
 
