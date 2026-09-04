@@ -161,56 +161,67 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0c0c0b]/88 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-5 sm:px-8">
+      <header className="site-header">
+        <div className="site-header-inner">
           <a
             href="#"
-            className="flex items-center gap-2.5"
+            className="brand-lockup"
             aria-label="LAZYFOOD.AI หน้าหลัก"
           >
-            <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Sparkles className="size-4" />
+            <span className="brand-icon">
+              <Sparkles className="size-5" />
             </span>
-            <span className="font-black tracking-[-0.04em]">
-              LAZYFOOD<span className="text-primary">.AI</span>
+            <span className="brand-copy">
+              <strong>
+                LAZYFOOD<span>.AI</span>
+              </strong>
+              <small>AI Food Creative Studio</small>
             </span>
           </a>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-[#aaa99f]">
-            เวอร์ชันทดลอง
-          </span>
+
+          <nav className="header-nav" aria-label="เมนูหลัก">
+            <a href="#workspace">สร้างโปรโมชัน</a>
+            <a href="#result">ตัวอย่างผลงาน</a>
+            <span className="beta-pill">เวอร์ชันทดลอง</span>
+          </nav>
         </div>
       </header>
 
-      <section className="mx-auto max-w-[1500px] px-5 pb-10 pt-8 sm:px-8 sm:pt-10">
-        <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              <span className="h-px w-7 bg-primary" /> AI PROMO STUDIO
-            </div>
-            <h1 className="max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
-              เปลี่ยนเมนูเด็ด ให้เป็น
-              <br className="hidden sm:block" /> โพสต์ที่คน
-              <span className="text-primary">หยุดดู</span>
-            </h1>
+      <section className="site-shell">
+        <div className="hero-block">
+          <div className="hero-kicker">
+            <span /> AI FOOD PROMOTION STUDIO
           </div>
-          <p className="max-w-md text-base leading-7 text-[#aaa99f]">
-            กรอกรายละเอียดร้านครั้งเดียว แล้วให้ AI ช่วยคิดภาพ โปร
-            และแคปชันที่พร้อมโพสต์ในทุกช่องทาง
+          <h1>
+            สร้างรูปโปรโมตร้านอาหารง่ายๆ
+            <span>พร้อมโพสต์ในไม่กี่คลิก</span>
+          </h1>
+          <p>
+            ใส่ชื่อร้าน เมนู ราคา และโปรโมชัน แล้วให้ AI ช่วยจัดภาพพร้อมแคปชัน
+            สำหรับช่องทางที่คุณเลือก
           </p>
+          <div className="hero-stats" aria-label="จุดเด่นของเครื่องมือ">
+            <span>4 ช่องทางยอดนิยม</span>
+            <span>3 ขนาดพร้อมใช้</span>
+            <span>แคปชันพร้อมโพสต์</span>
+          </div>
         </div>
 
-        <div className="workspace-grid">
+        <div id="workspace" className="workspace-grid">
           <form
-            className="panel order-2 lg:order-1"
+            className="panel form-panel"
             onSubmit={(event) => {
               event.preventDefault();
               generatePromo();
             }}
           >
             <div className="panel-heading">
-              <div>
+              <div className="heading-copy">
                 <span className="step-number">01</span>
-                <h2>รายละเอียดโปรโมชัน</h2>
+                <div>
+                  <h2>ตั้งค่าโปรโมชัน</h2>
+                  <p>กรอกรายละเอียดร้านและกำหนดรูปแบบโพสต์ที่ต้องการ</p>
+                </div>
               </div>
               <button
                 type="button"
@@ -221,80 +232,102 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="space-y-5 p-5 sm:p-6">
-              <Field label="ชื่อร้าน">
-                <Input
-                  value={promo.restaurant}
-                  onChange={(e) => update('restaurant', e.target.value)}
-                />
-              </Field>
+            <div className="form-body">
+              <section className="form-section">
+                <div className="section-heading">
+                  <div>
+                    <h3>ข้อมูลร้านและเมนู</h3>
+                    <p>ระบุเมนูหลักและข้อเสนอที่ลูกค้าจะเห็นบนภาพ</p>
+                  </div>
+                  <span>STEP 1</span>
+                </div>
 
-              <Field label="เมนูที่อยากโปรโมต">
-                <Input
-                  value={promo.menu}
-                  onChange={(e) => update('menu', e.target.value)}
-                />
-              </Field>
+                <div className="fields-stack">
+                  <Field label="ชื่อร้าน">
+                    <Input
+                      value={promo.restaurant}
+                      onChange={(e) => update('restaurant', e.target.value)}
+                    />
+                  </Field>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="ข้อเสนอ / โปรโมชัน">
-                  <Input
-                    value={promo.offer}
-                    onChange={(e) => update('offer', e.target.value)}
-                  />
-                </Field>
-                <Field label="ราคา">
-                  <Input
-                    value={promo.price}
-                    onChange={(e) => update('price', e.target.value)}
-                  />
-                </Field>
-              </div>
+                  <Field label="เมนูที่อยากโปรโมต">
+                    <Input
+                      value={promo.menu}
+                      onChange={(e) => update('menu', e.target.value)}
+                    />
+                  </Field>
 
-              <Field label="จุดเด่นของเมนู">
-                <Textarea
-                  rows={3}
-                  value={promo.details}
-                  onChange={(e) => update('details', e.target.value)}
-                />
-              </Field>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="ข้อเสนอ / โปรโมชัน">
+                      <Input
+                        value={promo.offer}
+                        onChange={(e) => update('offer', e.target.value)}
+                      />
+                    </Field>
+                    <Field label="ราคา">
+                      <Input
+                        value={promo.price}
+                        onChange={(e) => update('price', e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                </div>
+              </section>
 
-              <Field label="ช่องทางที่จะโพสต์">
-                <div className="grid grid-cols-2 gap-2">
-                  {channels.map((channel) => (
-                    <button
-                      key={channel}
-                      type="button"
-                      className={`choice-button ${promo.channel === channel ? 'active' : ''}`}
-                      onClick={() => update('channel', channel)}
+              <section className="form-section">
+                <div className="section-heading">
+                  <div>
+                    <h3>รายละเอียดและรูปแบบ</h3>
+                    <p>เลือกจุดขาย ช่องทาง และน้ำเสียงให้เหมาะกับโพสต์</p>
+                  </div>
+                  <span>STEP 2</span>
+                </div>
+
+                <div className="fields-stack">
+                  <Field label="จุดเด่นของเมนู">
+                    <Textarea
+                      rows={3}
+                      value={promo.details}
+                      onChange={(e) => update('details', e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="ช่องทางที่จะโพสต์">
+                    <div className="grid grid-cols-2 gap-2">
+                      {channels.map((channel) => (
+                        <button
+                          key={channel}
+                          type="button"
+                          className={`choice-button ${promo.channel === channel ? 'active' : ''}`}
+                          onClick={() => update('channel', channel)}
+                        >
+                          {promo.channel === channel && (
+                            <Check className="size-3.5" />
+                          )}
+                          {channel}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field label="น้ำเสียง">
+                    <NativeSelect
+                      value={promo.tone}
+                      onChange={(e) => update('tone', e.target.value)}
+                      className="w-full"
                     >
-                      {promo.channel === channel && (
-                        <Check className="size-3.5" />
-                      )}
-                      {channel}
-                    </button>
-                  ))}
+                      {tones.map((tone) => (
+                        <option key={tone}>{tone}</option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
                 </div>
-              </Field>
-
-              <Field label="น้ำเสียง">
-                <div>
-                  <NativeSelect
-                    value={promo.tone}
-                    onChange={(e) => update('tone', e.target.value)}
-                    className="w-full"
-                  >
-                    {tones.map((tone) => (
-                      <option key={tone}>{tone}</option>
-                    ))}
-                  </NativeSelect>
-                </div>
-              </Field>
+              </section>
 
               <Button
                 type="submit"
                 size="lg"
-                className="h-14 w-full rounded-xl text-base font-extrabold shadow-[0_14px_40px_rgba(255,79,47,.24)]"
+                className="generate-button h-14 w-full rounded-xl text-base font-extrabold"
                 disabled={loading}
               >
                 {loading ? (
@@ -307,102 +340,108 @@ export default function Home() {
             </div>
           </form>
 
-          <section
-            className="panel order-1 overflow-hidden lg:order-2"
-            aria-label="ตัวอย่างผลงาน"
-          >
-            <div className="panel-heading">
-              <div>
-                <span className="step-number">02</span>
-                <h2>ผลงานของคุณ</h2>
-              </div>
-              <div
-                className="ratio-toggle"
-                role="group"
-                aria-label="อัตราส่วนรูปภาพ"
-              >
-                <button
-                  type="button"
-                  className={ratio === 'square' ? 'active' : ''}
-                  onClick={() => setRatio('square')}
-                >
-                  1:1
-                </button>
-                <button
-                  type="button"
-                  className={ratio === 'portrait' ? 'active' : ''}
-                  onClick={() => setRatio('portrait')}
-                >
-                  4:5
-                </button>
-                <button
-                  type="button"
-                  className={ratio === 'story' ? 'active' : ''}
-                  onClick={() => setRatio('story')}
-                >
-                  9:16
-                </button>
-              </div>
-            </div>
-
-            <div className="preview-stage">
-              <div
-                className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}
-              >
-                <Image
-                  src="/pad-krapao-promo.png"
-                  alt="ข้าวกะเพราไข่ดาวสำหรับโปรโมชันร้านอาหาร"
-                  fill
-                  priority
-                  sizes="(max-width: 1023px) 90vw, 48vw"
-                />
-                <div className="promo-shade" />
-                <div className="promo-topline">
-                  <span>{result.restaurant}</span>
-                  <span className="promo-badge">พร้อมเสิร์ฟ</span>
-                </div>
-                <div className="promo-copy">
-                  <span className="eyebrow">เมนูฮิตประจำสัปดาห์</span>
-                  <h3>{result.offer}</h3>
-                  <p>{result.menu}</p>
-                  <div className="price-pill">{result.price}</div>
-                </div>
-                {loading && (
-                  <div className="loading-overlay">
-                    <LoaderCircle className="size-8 animate-spin text-primary" />
-                    <span>AI กำลังจัดจาน...</span>
+          <div className="results-column">
+            <section
+              id="result"
+              className="panel result-panel overflow-hidden"
+              aria-label="ตัวอย่างผลงาน"
+            >
+              <div className="panel-heading">
+                <div className="heading-copy">
+                  <span className="step-number result-step">02</span>
+                  <div>
+                    <h2>พื้นที่สร้างสรรค์</h2>
+                    <p>ดูตัวอย่างและสลับขนาดผลงานก่อนนำไปโพสต์</p>
                   </div>
-                )}
+                </div>
+                <div
+                  className="ratio-toggle"
+                  role="group"
+                  aria-label="อัตราส่วนรูปภาพ"
+                >
+                  <button
+                    type="button"
+                    className={ratio === 'square' ? 'active' : ''}
+                    onClick={() => setRatio('square')}
+                  >
+                    1:1
+                  </button>
+                  <button
+                    type="button"
+                    className={ratio === 'portrait' ? 'active' : ''}
+                    onClick={() => setRatio('portrait')}
+                  >
+                    4:5
+                  </button>
+                  <button
+                    type="button"
+                    className={ratio === 'story' ? 'active' : ''}
+                    onClick={() => setRatio('story')}
+                  >
+                    9:16
+                  </button>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <aside className="panel order-3 lg:col-start-2">
-            <div className="panel-heading compact">
-              <div className="flex items-center gap-2">
-                <Camera className="size-4 text-primary" />
-                <h2>แคปชันสำหรับ {result.channel}</h2>
+              <div className="preview-stage">
+                <div
+                  className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}
+                >
+                  <Image
+                    src="/pad-krapao-promo.png"
+                    alt="ข้าวกะเพราไข่ดาวสำหรับโปรโมชันร้านอาหาร"
+                    fill
+                    priority
+                    sizes="(max-width: 1023px) 90vw, 48vw"
+                  />
+                  <div className="promo-shade" />
+                  <div className="promo-topline">
+                    <span>{result.restaurant}</span>
+                    <span className="promo-badge">พร้อมเสิร์ฟ</span>
+                  </div>
+                  <div className="promo-copy">
+                    <span className="eyebrow">เมนูฮิตประจำสัปดาห์</span>
+                    <h3>{result.offer}</h3>
+                    <p>{result.menu}</p>
+                    <div className="price-pill">{result.price}</div>
+                  </div>
+                  {loading && (
+                    <div className="loading-overlay">
+                      <LoaderCircle className="size-8 animate-spin text-primary" />
+                      <span>AI กำลังจัดจาน...</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={copyCaption}
-                className="text-[#c5c3ba] hover:bg-white/10 hover:text-white"
-              >
-                {copied ? (
-                  <Check className="size-4 text-emerald-400" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-                {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
-              </Button>
-            </div>
-            <div className="p-5 sm:p-6">
-              <p className="whitespace-pre-line text-[15px] leading-7 text-[#d3d1c9]">
-                {caption}
-              </p>
-            </div>
-          </aside>
+            </section>
+
+            <aside id="caption" className="panel caption-panel">
+              <div className="panel-heading compact">
+                <div className="flex items-center gap-2">
+                  <Camera className="size-4 text-primary" />
+                  <h2>แคปชันสำหรับ {result.channel}</h2>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyCaption}
+                  className="text-[#c5c3ba] hover:bg-white/10 hover:text-white"
+                >
+                  {copied ? (
+                    <Check className="size-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                  {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
+                </Button>
+              </div>
+              <div className="p-5 sm:p-6">
+                <p className="whitespace-pre-line text-[15px] leading-7 text-[#d3d1c9]">
+                  {caption}
+                </p>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     </main>
