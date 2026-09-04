@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
   Check,
   Camera,
@@ -348,9 +349,12 @@ export default function Home() {
               <div
                 className={`promo-card ratio-${ratio} ${loading ? 'is-loading' : ''}`}
               >
-                <img
+                <Image
                   src="/pad-krapao-promo.png"
                   alt="ข้าวกะเพราไข่ดาวสำหรับโปรโมชันร้านอาหาร"
+                  fill
+                  priority
+                  sizes="(max-width: 1023px) 90vw, 48vw"
                 />
                 <div className="promo-shade" />
                 <div className="promo-topline">
